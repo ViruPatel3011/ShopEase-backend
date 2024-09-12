@@ -1,10 +1,12 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const { createProduct } = require('./controller/Product');
 const server = express();
 const productsRouter = require('./routes/Product');
 const brandsRouter = require('./routes/Brands')
 const categoriesRouter = require('./routes/Category');
+const userRouter = require('./routes/User');
+const authRouter = require('./routes/Auth');
+const errorMiddleware=require('./middlewares/error.middleware')
 const cors = require('cors');
 
 // middelwares
@@ -15,6 +17,8 @@ server.use(express.json()); // to parse req.body
 server.use('/products', productsRouter.router);
 server.use('/brands', brandsRouter.router);
 server.use('/categories', categoriesRouter.router);
+server.use('/users', userRouter.router);
+server.use('/auth', authRouter.router);
 
 main().catch(err => console.log(err));
 
@@ -27,6 +31,8 @@ async function main() {
 server.get('/', (req, res) => {
     res.json({ status: 'sucess' })
 })
+
+server.use(errorMiddleware);
 
 server.listen(8080, () => {
     console.log("Server started")
