@@ -1,14 +1,15 @@
-const { Product } = require("../model/Product")
+const { Product } = require("../model/Product");
+const apiResponse = require("../utils/ApiResponse");
 
 exports.createProduct = async (req, res) => {
     try {
         // We have to get this products from API body
         const product = new Product(req.body);
         const doc = await product.save();
-        res.status(201).json(doc);
+        res.status(201).json(apiResponse(true, "created product successfully",doc));
     } catch (err) {
         console.log(err);
-        res.status(400).json(err);
+        res.status(400).json(apiResponse(false, "not able to created product"));
     }
 };
 
@@ -50,10 +51,10 @@ exports.fetchAllProducts = async (req, res) => {
         const doc = await query.exec();
         console.log('doc' , doc);
         res.set('X-Total-Count', totalDocs)
-        res.status(200).json(doc);
+        res.status(200).json(apiResponse(true, "fetched all products successfully", doc));
     } catch (err) {
         console.log(err);
-        res.status(400).json(err);
+        res.status(400).json(apiResponse(false, "not able to fetched all products "));
     }
 };
 
@@ -61,10 +62,10 @@ exports.fetchProductById = async (req, res) => {
     const { id } = req.params;
     try {
         const product = await Product.findById(id)
-        res.status(200).json(product);
+        res.status(200).json(apiResponse(true, "fetched product for user successfully", product));
     } catch (err) {
         console.log(err);
-        res.status(400).json(err);
+        res.status(400).json(apiResponse(false, "not able to fetched product for user"));
     }
 }
 
@@ -72,9 +73,9 @@ exports.updateProduct = async (req, res) => {
     const { id } = req.params;
     try {
         const product = await Product.findByIdAndUpdate(id, req.body, { new: true })
-        res.status(200).json(product);
+        res.status(200).json(apiResponse(true, "update product for user successfully", product));
     } catch (err) {
         console.log(err);
-        res.status(400).json(err);
+        res.status(400).json(apiResponse(false, "not able to update product for user"));
     }
 }

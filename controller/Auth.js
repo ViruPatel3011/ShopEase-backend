@@ -5,11 +5,12 @@ exports.createUser = async (req, res) => {
     try {
         // We have to get this category from API body
         const user = new User(req.body);
+        console.log('user', user);
         const doc = await user.save();
-        res.status(201).json(doc);
+        res.status(201).json(apiResponse(true, "User Created Successfully", doc));
     } catch (err) {
         console.log(err);
-        res.status(400).json(err);
+        res.status(400).json(apiResponse(false, "something Wrong Creating User"));
     }
 };
 
