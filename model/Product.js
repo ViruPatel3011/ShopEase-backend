@@ -7,12 +7,13 @@ const productSchema = new Schema({
     description: { type: String, required: true },
     price: { type: Number, min: [0, 'Wrong min price'], max: [10000, 'Wrong max price'] },
     discountPercentage: { type: Number, min: [1, 'Wrong min discount'], max: [99, 'Wrong max discount'] },
-    rating: { type: Number, min: [1, 'Wrong min rating'], max: [5, 'Wrong max rating'], default: 0 },
-    stock: { type: Number, min: [0, 'Wrong min stock'], default: 0 },
+    rating: { type: Number, min: [0, 'Wrong min rating'], max: [5, 'Wrong max rating'], default: 1 },
+    stock: { type: Number, min: [0, 'Wrong min stock'], default: 1 },
     brand: { type: String, required: true },
     category: { type: String, required: true },
     thumbnail: { type: String, required: true },
     deleted: { type: Boolean, default: false },
+    images:{type:[String]}
 })
 
 const virtual = productSchema.virtual('id');
