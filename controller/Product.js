@@ -5,9 +5,9 @@ exports.createProduct = async (req, res) => {
     try {
         // We have to get this products from API body
         const product = new Product(req.body);
-        console.log('product' , product);
+        console.log('product', product);
         const doc = await product.save();
-        res.status(201).json(apiResponse(true, "created product successfully",doc));
+        res.status(201).json(apiResponse(true, "created product successfully", doc));
     } catch (err) {
         console.log(err);
         res.status(400).json(apiResponse(false, "not able to created product"));
@@ -20,8 +20,8 @@ exports.fetchAllProducts = async (req, res) => {
     // sort = {_sort:"price",_order="desc"}
     // pagination = {_page:1,_limit=10}
 
-    let query = Product.find({});
-    let totalProductsQuery = Product.find({});
+    let query = Product.find({ deleted: { $ne: true } });
+    let totalProductsQuery = Product.find({ deleted: { $ne: true } });
 
     if (req.query.category) {
         query = query.find({ category: req.query.category })
@@ -50,7 +50,7 @@ exports.fetchAllProducts = async (req, res) => {
 
     try {
         const doc = await query.exec();
-        console.log('doc' , doc);
+        console.log('doc', doc);
         res.set('X-Total-Count', totalDocs)
         res.status(200).json(doc);
     } catch (err) {
