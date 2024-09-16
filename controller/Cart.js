@@ -4,7 +4,6 @@ const apiResponse = require("../utils/ApiResponse");
 exports.fetchCartByUser = async (req, res) => {
     try {
         const { user } = req.query;
-        console.log('user', user);
         const carts = await Cart.find({ user: user }).populate('product');
         res.status(200).json(apiResponse(true, "fetched all Carts Successfully", carts));
     } catch (err) {
@@ -15,7 +14,6 @@ exports.fetchCartByUser = async (req, res) => {
 exports.addToCart = async (req, res) => {
     try {
         const cart = new Cart(req.body);
-        console.log('cart', cart);
         const doc = await cart.save();
         const result = await doc.populate('product')
         res.status(201).json(apiResponse(true, "created Cart Successfully", result));
@@ -32,9 +30,9 @@ exports.updateCart = async (req, res) => {
             new: true,
         });
         const result = await cart.populate('product');
-        res.status(200).json(result);
+        res.status(200).json(apiResponse(true, "Cart Updated Successfully", result));
     } catch (err) {
-        res.status(400).json(err);
+        res.status(400).json(apiResponse(false, "Not able to update Cart"));
     }
 };
 

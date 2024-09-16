@@ -5,7 +5,6 @@ exports.createProduct = async (req, res) => {
     try {
         // We have to get this products from API body
         const product = new Product(req.body);
-        console.log('product', product);
         const doc = await product.save();
         res.status(201).json(apiResponse(true, "created product successfully", doc));
     } catch (err) {
@@ -50,12 +49,11 @@ exports.fetchAllProducts = async (req, res) => {
 
     try {
         const doc = await query.exec();
-        console.log('doc', doc);
         res.set('X-Total-Count', totalDocs)
-        res.status(200).json(doc);
+        res.status(200).json(apiResponse(true, "fetched all products successfully", { doc, totalCount: totalDocs }));
     } catch (err) {
         console.log(err);
-        res.status(400).json(apiResponse(false, "not able to fetched all products "));
+        res.status(400).json(apiResponse(false, "not able to fetched all products"));
     }
 };
 
@@ -74,7 +72,7 @@ exports.updateProduct = async (req, res) => {
     const { id } = req.params;
     try {
         const product = await Product.findByIdAndUpdate(id, req.body, { new: true })
-        res.status(200).json(apiResponse(true, "update product for user successfully", product));
+        res.status(200).json(apiResponse(true, "Product updated successfully", product));
     } catch (err) {
         console.log(err);
         res.status(400).json(apiResponse(false, "not able to update product for user"));

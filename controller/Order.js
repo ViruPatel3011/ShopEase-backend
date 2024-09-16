@@ -4,8 +4,6 @@ const apiResponse = require("../utils/ApiResponse");
 exports.fetchOrdersByUser = async (req, res) => {
     try {
         const { userId } = req.params;
-        console.log("userId",userId);
-        console.log("req.params",req.params);
         const orders = await Order.find({ user: userId });
         res.status(200).json(apiResponse(true, "fetched all Orders Successfully", orders));
     } catch (err) {
@@ -16,7 +14,6 @@ exports.fetchOrdersByUser = async (req, res) => {
 exports.createOrder = async (req, res) => {
     try {
         const order = new Order(req.body);
-        console.log('order', order);
         const doc = await order.save();
         res.status(201).json(apiResponse(true, "created Order Successfully", doc));
     } catch (err) {
@@ -41,9 +38,9 @@ exports.updateOrder = async (req, res) => {
         const order = await Order.findByIdAndUpdate(id, req.body, {
             new: true,
         });
-        res.status(200).json(order);
+        res.status(200).json(apiResponse(true, "Order updated Successfully", order));
     } catch (err) {
-        res.status(400).json(err);
+        res.status(400).json(apiResponse(false, "not able to update Order"));
     }
 };
 
@@ -72,9 +69,8 @@ exports.fetchAllOrders = async (req, res) => {
 
     try {
         const doc = await query.exec();
-        console.log('doc', doc);
         res.set('X-Total-Count', totalDocs)
-        res.status(200).json(apiResponse(true, "Orders fetched succesfully", doc));
+        res.status(200).json(apiResponse(true, "Orders fetched succesfully", { doc, totalCount: totalDocs }));
     } catch (err) {
         console.log(err);
         res.status(400).json(apiResponse(false, "not able to fetched all Orders "));

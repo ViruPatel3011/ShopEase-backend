@@ -5,7 +5,6 @@ exports.createUser = async (req, res) => {
     try {
         // We have to get this category from API body
         const user = new User(req.body);
-        console.log('user', user);
         const doc = await user.save();
         // TODO - instead  of doc there should be id and role only
         res.status(201).json(apiResponse(true, "User Created Successfully", doc));
