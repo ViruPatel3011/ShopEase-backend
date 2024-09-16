@@ -1,13 +1,29 @@
 const { User } = require("../model/User");
+const crypto = require('crypto');
 const apiResponse = require("../utils/ApiResponse");
+const { sanitizedUser } = require("../services/common");
+const SECRET_KEY = 'SECRET_KEY';
+const jwt = require('jsonwebtoken');
+
 
 exports.createUser = async (req, res) => {
     try {
         // We have to get this category from API body
-        const user = new User(req.body);
-        const doc = await user.save();
-        // TODO - instead  of doc there should be id and role only
-        res.status(201).json(apiResponse(true, "User Created Successfully", doc));
+        var salt = crypto.randomBytes(16);
+        crypto.pbkdf2(req.body.password, salt, 310000, 32, 'sha256', async function (err, hashedPassword) {
+            const user = new User({ ...req.body, password: hashedPassword, salt });
+            const doc = await user.save();
+            req.login(sanitizedUser(user), (err) => { // this also calles serializer and adds to session
+                if (err) {
+                    res.status(400).json(apiResponse(false, "something Wrong Creating User"));
+                }
+                else {
+                    const token = jwt.sign(sanitizedUser(user), SECRET_KEY);
+                    res.status(201).json(apiResponse(true, "User Created Successfully", token));
+                }
+            });
+        }
+        );
     } catch (err) {
         console.log(err);
         res.status(400).json(apiResponse(false, "something Wrong Creating User"));
@@ -15,21 +31,9 @@ exports.createUser = async (req, res) => {
 };
 
 exports.loginUser = async (req, res) => {
-    try {
-        // We have to get this category from API body
-        const user = await User.findOne({ email: req.body.email });
-        if (!user) {
-            res.status(401).json(apiResponse(false, "No such user email found"));
-        }
-        else if (user.password == req.body.password) {
-            res.status(201).json(apiResponse(true, "Logged In successfully", user));
-        }
-        else {
-            res.status(401).json(apiResponse(false, "Invalid Credentials"));
+    res.json(req.user);
+};
 
-        }
-    } catch (err) {
-        console.log(err);
-        res.status(400).json(apiResponse(false, err));
-    }
+exports.checkUser = async (req, res) => {
+    res.json({ status: 'succes', user: req.user });
 };
