@@ -5,10 +5,11 @@ const CustomError = require('../utils/customError');
 
 exports.fetchUserById = async (req, res, next) => {
     try {
-        const { id } = req.params;
+        const { id } = req.user;
         const user = await User.findById(id, 'name email id addresses role orders').exec();
+
         if (user) {
-            res.status(200).json(apiResponse(true, "User fetched succesfully", user));
+            res.status(200).json(apiResponse(true, "User fetched succesfully", { id: user.id, addresses: user.addresses, email: user.email, role: user.role }));
         }
         else {
             res.status(404).json(apiResponse(false, "User does not exist"));

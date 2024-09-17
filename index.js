@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const server = express();
 const cors = require('cors');
 const session = require('express-session');
+const cookieParser = require('cookie-parser');
 const passport = require('passport');
 const crypto = require('crypto');
 const LocalStrategy = require('passport-local').Strategy;
@@ -19,23 +20,26 @@ const cartRouter = require('./routes/Cart');
 const ordersRouter = require('./routes/Order');
 const errorMiddleware = require('./middlewares/error.middleware');
 const { User } = require('./model/User');
-const { isAuth, sanitizedUser } = require('./services/common');
+const { isAuth, sanitizedUser, cookieExtractor } = require('./services/common');
 
 
 const SECRET_KEY = 'SECRET_KEY';
 // JWT options
 
 var opts = {}
-opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
+opts.jwtFromRequest = cookieExtractor;
 opts.secretOrKey = SECRET_KEY;
 
 
 // middelwares
+
+server.use(express.static('build'));
 server.use(session({
     secret: 'keyboard cat',
     resave: false, // don't save session if unmodified
     saveUninitialized: false, // don't create session until something stored
 }));
+server.use(cookieParser());
 server.use(passport.authenticate('session'));
 
 server.use(cors({
@@ -54,10 +58,10 @@ server.use('/orders', isAuth(), ordersRouter.router);
 // Passport strategies
 passport.use('local', new LocalStrategy(
     { usernameField: 'email' },
-    async function (username, password, done) {
+    async function (email, password, done) {
         // by default passport uses username - { username: username }
         try {
-            const user = await User.findOne({ email: username }).exec();
+            const user = await User.findOne({ email: email }).exec();
             if (!user) {
                 done(null, false, { message: "Invalid Credentials" })
             }
@@ -72,7 +76,7 @@ passport.use('local', new LocalStrategy(
                         return done(null, false, { message: "Invalid Credentials" })
                     }
                     const token = jwt.sign(sanitizedUser(user), SECRET_KEY);
-                    done(null, token) // this line sends to serializer
+                    done(null, { token }) // this line sends to serializer
                 }
             )
 
@@ -86,7 +90,7 @@ passport.use('jwt', new JwtStrategy(opts, async function (jwt_payload, done) {
     console.log({ jwt_payload })
     try {
 
-        const user = await User.findOne({ id: jwt_payload.sub })
+        const user = await User.findById(jwt_payload.id)
         if (user) {
             return done(null, sanitizedUser(user)); // this calls serializer
         } else {

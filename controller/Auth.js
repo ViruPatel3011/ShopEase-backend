@@ -18,8 +18,9 @@ exports.createUser = async (req, res) => {
                     res.status(400).json(apiResponse(false, "something Wrong Creating User"));
                 }
                 else {
-                    const token = jwt.sign(sanitizedUser(user), SECRET_KEY);
-                    res.status(201).json(apiResponse(true, "User Created Successfully", token));
+                    const token = jwt.sign(sanitizedUser(user), SECRET_KEY, { expiresIn: '2h' });
+                    res.cookie('jwt', token, { expires: new Date(Date.now() + 3600000), httpOnly: true })
+                        .status(201).json(apiResponse(true, "User Created Successfully", token));
                 }
             });
         }
@@ -31,9 +32,10 @@ exports.createUser = async (req, res) => {
 };
 
 exports.loginUser = async (req, res) => {
-    res.json(req.user);
+    res.cookie('jwt', req.user.token, { expires: new Date(Date.now() + 3600000), httpOnly: true })
+        .status(201).json(apiResponse(true, "User Created Successfully", req.user.token));
 };
 
 exports.checkUser = async (req, res) => {
-    res.json({ status: 'succes', user: req.user });
+    res.json(apiResponse(true, "User checked Successfully", req.user));
 };

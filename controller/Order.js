@@ -3,8 +3,8 @@ const apiResponse = require("../utils/ApiResponse");
 
 exports.fetchOrdersByUser = async (req, res) => {
     try {
-        const { userId } = req.params;
-        const orders = await Order.find({ user: userId });
+        const { id } = req.user;
+        const orders = await Order.find({ user: id });
         res.status(200).json(apiResponse(true, "fetched all Orders Successfully", orders));
     } catch (err) {
         res.status(400).json(apiResponse(false, "getting error in Order fetching"));
