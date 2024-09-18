@@ -8,7 +8,6 @@ const userSchema = new Schema({
     role: { type: String, required: true, default: "user" },
     addresses: { type: [Schema.Types.Mixed] },
     name: { type: String },
-    orders: { type: [Schema.Types.Mixed] },
     salt: Buffer
 
 })

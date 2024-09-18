@@ -76,7 +76,7 @@ passport.use('local', new LocalStrategy(
                         return done(null, false, { message: "Invalid Credentials" })
                     }
                     const token = jwt.sign(sanitizedUser(user), SECRET_KEY);
-                    done(null, { token }) // this line sends to serializer
+                    done(null, { id: user.id, role: user.role }) // this line sends to serializer
                 }
             )
 
@@ -104,9 +104,9 @@ passport.use('jwt', new JwtStrategy(opts, async function (jwt_payload, done) {
 
 // this creates session variable req.user on being called from callbacks
 passport.serializeUser(function (user, cb) {
-    console.log("serialize:", user);
+    console.log("serialize:", { id: user.id, role: user.role });
     process.nextTick(function () {
-        return cb(null, user);
+        return cb(null, { id: user.id, role: user.role });
     });
 });
 

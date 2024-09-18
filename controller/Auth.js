@@ -18,9 +18,14 @@ exports.createUser = async (req, res) => {
                     res.status(400).json(apiResponse(false, "something Wrong Creating User"));
                 }
                 else {
-                    const token = jwt.sign(sanitizedUser(user), SECRET_KEY, { expiresIn: '2h' });
-                    res.cookie('jwt', token, { expires: new Date(Date.now() + 3600000), httpOnly: true })
-                        .status(201).json(apiResponse(true, "User Created Successfully", token));
+                    const token = jwt.sign(sanitizedUser(user), SECRET_KEY, { expiresIn: '15m' });
+                    res
+                        .cookie('jwt', token,
+                            {
+                                expires: new Date(Date.now() + 3600000),
+                                httpOnly: true
+                            })
+                        .status(201).json(apiResponse(true, "User Created Successfully", { id: doc.id, role: doc.role }));
                 }
             });
         }
@@ -32,10 +37,16 @@ exports.createUser = async (req, res) => {
 };
 
 exports.loginUser = async (req, res) => {
-    res.cookie('jwt', req.user.token, { expires: new Date(Date.now() + 3600000), httpOnly: true })
-        .status(201).json(apiResponse(true, "User Created Successfully", req.user.token));
+    const user = req.user;
+    res.cookie('jwt', user.token, { expires: new Date(Date.now() + 3600000), httpOnly: true })
+        .status(201).json(apiResponse(true, "User LoggedIN Successfully", { id: user.id, role: user.role }));
 };
 
-exports.checkUser = async (req, res) => {
-    res.json(apiResponse(true, "User checked Successfully", req.user));
+exports.checkAuth = async (req, res) => {
+    if (req.user) {
+        res.json(apiResponse(true, "User checked Successfully", req.user));
+    }
+    else {
+        req.sendStatus(apiResponse(false, "Unauthorized"));
+    }
 };
