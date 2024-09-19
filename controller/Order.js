@@ -17,7 +17,6 @@ exports.createOrder = async (req, res) => {
         const doc = await order.save();
         res.status(201).json(apiResponse(true, "created Order Successfully", doc));
     } catch (err) {
-        console.log(err);
         res.status(400).json(apiResponse(false, "getting error in Order creation"));
     }
 };
@@ -59,7 +58,6 @@ exports.fetchAllOrders = async (req, res) => {
     }
 
     const totalDocs = await totalOrdersQuery.countDocuments().exec();
-    console.log({ totalDocs });
 
     if (req.query._page && req.query._limit) {
         const pageSize = req.query._limit;

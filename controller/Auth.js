@@ -18,7 +18,7 @@ exports.createUser = async (req, res) => {
                     res.status(400).json(apiResponse(false, "something Wrong Creating User"));
                 }
                 else {
-                    const token = jwt.sign(sanitizedUser(user), SECRET_KEY, { expiresIn: '15m' });
+                    const token = jwt.sign(sanitizedUser(user), SECRET_KEY, { expiresIn: process.env.TOKEN_EXPIRY_TIME });
                     res
                         .cookie('jwt', token,
                             {
