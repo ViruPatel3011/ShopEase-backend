@@ -35,7 +35,6 @@ server.post(
         const sig = request.headers['stripe-signature'];
 
         let event;
-        console.log('event' , event);
 
         try {
             event = stripe.webhooks.constructEvent(request.body, sig, endpointSecret);
@@ -167,11 +166,28 @@ passport.deserializeUser(function (user, cb) {
 const stripe = require("stripe")(process.env.STRIPE_SERVER_KEY);
 
 server.post("/create-payment-intent", async (req, res) => {
-    const { totalAmount, orderId } = req.body;
+    const { orderId, productId } = req.body;
+    const product = await stripe.products.retrieve(productId);
+    console.log('fetchedProduct', product);
+
+    // Retrieve product information from Stripe using the productId
+    const productPrices = await stripe.prices.list({
+        product: productId,
+        active: true,
+    });
+
+    console.log('productPrices', productPrices);
+    // Make sure the product has a price
+    if (productPrices.data.length === 0) {
+        return res.status(400).send({ error: "No active price found for this product." });
+    }
+
+    const price = productPrices.data[0].unit_amount / 100;
+    console.log('price', price);
 
     // Create a PaymentIntent with the order amount and currency
     const paymentIntent = await stripe.paymentIntents.create({
-        amount: totalAmount * 100, // for decimal compensation,
+        amount: price * 100, // for decimal compensation,
         currency: "inr",
         automatic_payment_methods: {
             enabled: true,
