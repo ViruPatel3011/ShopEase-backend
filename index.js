@@ -21,6 +21,7 @@ const ordersRouter = require('./routes/Order');
 const errorMiddleware = require('./middlewares/error.middleware');
 const { User } = require('./model/User');
 const { isAuth, sanitizedUser, cookieExtractor } = require('./services/common');
+const { Order } = require('./model/Order');
 
 
 const SECRET_KEY = 'SECRET_KEY';
@@ -45,6 +46,8 @@ server.use(passport.authenticate('session'));
 server.use(cors({
     exposedHeaders: ['X-Total-Count']
 }));
+
+server.use(express.raw({ type: 'application/json' }));
 server.use(express.json()); // to parse req.body
 server.use('/products', isAuth(), productsRouter.router);
 // We can use JWT token for client-only auth
@@ -124,32 +127,68 @@ passport.deserializeUser(function (user, cb) {
 // This is a public sample test API key.
 // Don’t submit any personally identifiable information in requests made with this key.
 // Sign in to see your own test API key embedded in code samples.
-const stripe = require("stripe")('sk_test_tR3PYbcVNZZ796tH88S4VQ2u');
-
-const calculateOrderAmount = (items) => {
-    return 1500;
-};
+const stripe = require("stripe")('sk_test_51Q0bXuDsLIm1HpbYXlnQYdvghjcpLsreOoOIwUoMHzsBLiFZflPzmhnQkOnGsoApx6fpCpGJKPBTT6sKU0MY5JJK00X0qZzxnw');
 
 server.post("/create-payment-intent", async (req, res) => {
-    const { items } = req.body;
+    const { totalAmount } = req.body;
+    console.log('totalAmount', totalAmount);
 
     // Create a PaymentIntent with the order amount and currency
     const paymentIntent = await stripe.paymentIntents.create({
-        amount: calculateOrderAmount(items),
+        amount: totalAmount * 100, // for decimal compensation,
         currency: "usd",
-        // In the latest version of the API, specifying the `automatic_payment_methods` parameter is optional because Stripe enables its functionality by default.
         automatic_payment_methods: {
             enabled: true,
         },
     });
 
     res.send({
-        clientSecret: paymentIntent.client_secret,
+        clientSecret: paymentIntent?.client_secret,
         // [DEV]: For demo purposes only, you should avoid exposing the PaymentIntent ID in the client-side code.
         dpmCheckerLink: `https://dashboard.stripe.com/settings/payment_methods/review?transaction_id=${paymentIntent.id}`,
     });
 });
 
+// Webhook
+
+const endpointSecret = "whsec_5b8cb445eb7a9a14cdd36330b691ed43ca4367f45b0fb6ccc11072a2ef2c9ac9";
+
+server.post(
+    '/stripe-webhook',
+    express.raw({ type: 'application/json' }),
+    async (request, response) => {
+        const sig = request.headers['stripe-signature'];
+
+        let event;
+
+        try {
+            event = stripe.webhooks.constructEvent(request.body, sig, endpointSecret);
+        } catch (err) {
+            response.status(400).send(`Webhook Error: ${err.message}`);
+            return;
+        }
+
+        // Handle the event
+        switch (event.type) {
+            case 'payment_intent.succeeded':
+                const paymentIntentSucceeded = event.data.object;
+                console.log('paymentIntentSucceeded' , paymentIntentSucceeded);
+                const order = await Order.findById(
+                    paymentIntentSucceeded.metadata.orderId
+                );
+                order.paymentStatus = 'received';
+                await order.save();
+
+                break;
+            // ... handle other event types
+            default:
+                console.log(`Unhandled event type ${event.type}`);
+        }
+
+        // Return a 200 response to acknowledge receipt of the event
+        response.send();
+    }
+);
 
 main().catch(err => console.log(err));
 
