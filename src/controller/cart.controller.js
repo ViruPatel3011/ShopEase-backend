@@ -1,4 +1,4 @@
-const { Cart } = require("../model/Cart");
+const { Cart } = require("../model/cart.model");
 const apiResponse = require("../utils/ApiResponse");
 
 exports.fetchCartByUser = async (req, res) => {

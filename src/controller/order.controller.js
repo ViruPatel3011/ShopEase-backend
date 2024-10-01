@@ -1,4 +1,4 @@
-const { Order } = require("../model/Order");
+const { Order } = require("../model/order.model");
 const apiResponse = require("../utils/ApiResponse");
 
 exports.fetchOrdersByUser = async (req, res) => {

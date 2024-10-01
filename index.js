@@ -12,17 +12,19 @@ const JwtStrategy = require('passport-jwt').Strategy;
 const ExtractJwt = require('passport-jwt').ExtractJwt;
 const jwt = require('jsonwebtoken');
 
-const productsRouter = require('./routes/Product');
-const brandsRouter = require('./routes/Brands')
-const categoriesRouter = require('./routes/Category');
-const userRouter = require('./routes/User');
-const authRouter = require('./routes/Auth');
-const cartRouter = require('./routes/Cart');
-const ordersRouter = require('./routes/Order');
-const errorMiddleware = require('./middlewares/error.middleware');
-const { User } = require('./model/User');
-const { isAuth, sanitizedUser, cookieExtractor } = require('./services/common');
-const { Order } = require('./model/Order');
+const productsRouter = require('./src/routes/product.routes');
+const brandsRouter = require('./src/routes/brands.routes')
+const categoriesRouter = require('./src/routes/category.routes');
+const userRouter = require('./src/routes/user.routes');
+const authRouter = require('./src/routes/auth.routes');
+const cartRouter = require('./src/routes/cart.routes');
+const ordersRouter = require('./src/routes/order.routes');
+const errorMiddleware = require('./src/middlewares/error.middleware');
+const { User } = require('./src/model/user.model');
+const { isAuth, sanitizedUser, cookieExtractor } = require('./src/services/common');
+const { Order } = require('./src/model/order.model');
+const connectDB = require('./src/db');
+
 
 // Webhook
 
@@ -47,7 +49,6 @@ server.post(
         switch (event.type) {
             case 'payment_intent.succeeded':
                 const paymentIntentSucceeded = event.data.object;
-                console.log('paymentIntentSucceeded', paymentIntentSucceeded);
                 const order = await Order.findById(
                     paymentIntentSucceeded.metadata.orderId
                 );
@@ -168,7 +169,6 @@ const stripe = require("stripe")(process.env.STRIPE_SERVER_KEY);
 server.post("/create-payment-intent", async (req, res) => {
     const { orderId, productId } = req.body;
     const product = await stripe.products.retrieve(productId);
-    console.log('fetchedProduct', product);
 
     // Retrieve product information from Stripe using the productId
     const productPrices = await stripe.prices.list({
@@ -176,14 +176,12 @@ server.post("/create-payment-intent", async (req, res) => {
         active: true,
     });
 
-    console.log('productPrices', productPrices);
     // Make sure the product has a price
     if (productPrices.data.length === 0) {
         return res.status(400).send({ error: "No active price found for this product." });
     }
 
     const price = productPrices.data[0].unit_amount / 100;
-    console.log('price', price);
 
     // Create a PaymentIntent with the order amount and currency
     const paymentIntent = await stripe.paymentIntents.create({
@@ -204,16 +202,13 @@ server.post("/create-payment-intent", async (req, res) => {
     });
 });
 
-
-main().catch(err => console.log(err));
-
-async function main() {
-    await mongoose.connect(process.env.MONGODB_URL);
-    console.log("Database connected")
-}
+connectDB().then(() => {
+    server.listen(process.env.PORT || 8000, () => {
+        console.log(`⚙️ Server is running at port : ${process.env.PORT}`);
+    })
+})
+    .catch((err) => {
+        console.log("MONGO db connection failed !!! ", err);
+    })
 
 server.use(errorMiddleware);
-
-server.listen(process.env.PORT, () => {
-    console.log("Server started")
-})

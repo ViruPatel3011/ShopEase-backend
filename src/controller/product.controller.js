@@ -1,4 +1,4 @@
-const { Product } = require("../model/Product");
+const { Product } = require("../model/product.model");
 const apiResponse = require("../utils/ApiResponse");
 
 exports.createProduct = async (req, res) => {
@@ -6,7 +6,6 @@ exports.createProduct = async (req, res) => {
         // We have to get this products from API body
         const product = new Product(req.body);
         const doc = await product.save();
-        console.log('doc' , doc);
         res.status(201).json(apiResponse(true, "created product successfully", doc));
     } catch (err) {
         console.log(err);
