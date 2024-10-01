@@ -27,16 +27,34 @@ exports.fetchAllProducts = async (req, res) => {
     let query = Product.find(condition);
     let totalProductsQuery = Product.find(condition);
 
+    // Filter by category
     if (req.query.category) {
         query = query.find({ category: req.query.category })
         totalProductsQuery = totalProductsQuery.find({ category: req.query.category })
     }
 
+    // Filter by brand
     if (req.query.brand) {
         query = query.find({ brand: req.query.brand })
         totalProductsQuery = totalProductsQuery.find({ brand: req.query.brand })
     }
 
+    // **Add Search Query Handling**:
+    if (req.query.q) {
+        const searchTerm = req.query.q;
+        query = query.find({
+            $or: [
+                { title: { $regex: searchTerm, $options: 'i' } }, // Case-insensitive search on title
+                { description: { $regex: searchTerm, $options: 'i' } } // Case-insensitive search on description
+            ]
+        });
+        totalProductsQuery = totalProductsQuery.find({
+            $or: [
+                { name: { $regex: searchTerm, $options: 'i' } },
+                { description: { $regex: searchTerm, $options: 'i' } }
+            ]
+        });
+    }
 
     if (req.query._sort && req.query._order) {
         query = query.sort({ [req.query._sort]: req.query._order })
